@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Usage: ./upload_and_presign.sh FILE BUCKET EXPIRATION_SECONDS
+
+FILE=$1
+BUCKET=$2
+EXPIRATION=$3
+
+# Upload the file privately
+aws s3 cp "$FILE" s3://$BUCKET/
+
+# Presign URL
+aws s3 presign --expires-in $EXPIRATION s3://$BUCKET/$(basename $FILE)
+

@@ -1,0 +1,41 @@
+import boto3
+import requests
+import sys
+
+def main():
+    if len(sys.argv) != 4:
+        print("Usage: python3 fetch_upload_presign.py <URL> <BUCKET_NAME> <EXPIRATION_SECONDS>")
+        sys.exit(1)
+
+    url = sys.argv[1]
+    bucket = sys.argv[2]
+    expires_in = int(sys.argv[3])
+
+    # Extract file name from URL
+    file_name = url.split("/")[-1]
+
+    # Fetch file
+    print(f"Downloading {url}...")
+    response = requests.get(url)
+    with open(file_name, "wb") as f:
+        f.write(response.content)
+
+    # Upload to S3
+    print(f"Uploading {file_name} to bucket {bucket}...")
+    s3 = boto3.client("s3", region_name="us-east-1")
+    with open(file_name, "rb") as f:
+        s3.put_object(Body=f, Bucket=bucket, Key=file_name)
+
+    # Generate presigned URL
+    presigned_url = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": file_name},
+        ExpiresIn=expires_in
+    )
+
+    print("Presigned URL:")
+    print(presigned_url)
+
+if __name__ == "__main__":
+    main()
+
